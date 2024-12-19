@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">HappyHitter</string>
+    <string name="service_notification_listener_name">Notification Listener Service</string>
+    <string name="service_notification_listener_watcher_name">Notification Listener Watcher Service</string>
+</resources>
