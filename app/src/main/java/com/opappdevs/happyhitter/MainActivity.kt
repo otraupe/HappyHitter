@@ -170,9 +170,6 @@ class MainActivity : ComponentActivity() {
     // TODO: Navigation, Drawer, DI, DB, Settings, Icons, Color Themes (test day/night mode), SplashScreen
     // TODO: PlayStore and Apple Store, Impressum, Datenschutzerklärung
 
-    /* TODO: start using Git*/
-    // TODO: update to api version 35
-
     // TODO: manage key phrases with db
 
     // TODO: Toasting durch Snackbar ersetzen und in Util auslagern
