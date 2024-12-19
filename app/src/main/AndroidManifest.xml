@@ -7,10 +7,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <!--TODO: remove this one?-->
-<!--    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"-->
-<!--        tools:ignore="ProtectedPermissions" />-->
-    <!--TODO: do we need this one for re-registering?-->
+    <!--only needed for foreign components as per documentation
+    https://developer.android.com/reference/android/Manifest.permission#CHANGE_COMPONENT_ENABLED_STATE
+    -->
 <!--    <uses-permission android:name="android.permission.CHANGE_COMPONENT_ENABLED_STATE"-->
 <!--        tools:ignore="ProtectedPermissions" />-->
 
@@ -70,5 +69,4 @@
             </intent-filter>
         </activity>
     </application>
-
 </manifest>

@@ -18,7 +18,7 @@ class NotificationListenerService : NotificationListenerService() {
     private val tag = javaClass.simpleName
 
     private val targetPackageName = "com.google.android.as"
-    //the target app name would be "Android System Intelligence"
+    //the target app name would be "Android System Intelligence" (unspecific)
     //the app name in the notification appears to be custom set as "Now Playing"
     private val targetChannelId = "com.google.intelligence.sense.ambientmusic.MusicNotificationChannel"
 
@@ -142,7 +142,7 @@ class NotificationListenerService : NotificationListenerService() {
         var isServiceRunning = false
             private set
 
-        var isListenerEnabled = true
+        var isListenerEnabled = true    // TODO: currently not used
             private set
 
         fun disableListener() {

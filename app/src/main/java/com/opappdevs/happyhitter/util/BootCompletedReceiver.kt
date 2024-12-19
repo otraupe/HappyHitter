@@ -8,11 +8,11 @@ import androidx.core.content.ContextCompat
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequest
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.opappdevs.happyhitter.const.WATCHER_WORKER_FLEX_MINUTES
-import com.opappdevs.happyhitter.const.WATCHER_WORKER_PERIOD_MINUTES
+import com.opappdevs.happyhitter.const.WATCHER_WORKER_REPEAT_MINUTES
 import java.util.concurrent.TimeUnit
 
 class BootCompletedReceiver : BroadcastReceiver() {
@@ -38,6 +38,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
         val workManager = WorkManager.getInstance(context)
 
         // Check if the worker is already scheduled
+        // TODO: this check renders the UPDATE option below useless
         val workInfos = workManager.getWorkInfosForUniqueWork(
             NotificationListenerWatcherServiceWorker.WORK_NAME).get()
         if (workInfos.isNotEmpty() && workInfos[0].state == WorkInfo.State.ENQUEUED) {
@@ -47,9 +48,8 @@ class BootCompletedReceiver : BroadcastReceiver() {
         Log.d(tag, "Work not already enqueued, continuing scheduling")
 
         // Create the worker request
-        val workRequest = PeriodicWorkRequest.Builder(
-            NotificationListenerWatcherServiceWorker::class.java,
-            WATCHER_WORKER_PERIOD_MINUTES, TimeUnit.MINUTES,
+        val workRequest = PeriodicWorkRequestBuilder<NotificationListenerWatcherServiceWorker>(
+            WATCHER_WORKER_REPEAT_MINUTES, TimeUnit.MINUTES,
             WATCHER_WORKER_FLEX_MINUTES, TimeUnit.MINUTES  // min 300000 ms = 5 minutes
         )
             .setConstraints(
@@ -69,7 +69,8 @@ class BootCompletedReceiver : BroadcastReceiver() {
         Log.d(tag, "Worker enqueued, continuing to observing")
 
         // Observe the work status
-        // TODO: use Dependency Injection to initialize a ServiceManager with a suitable Lifecycle
+        // TODO: we need to?
+        //  use Dependency Injection to initialize a ServiceManager with a suitable Lifecycle
 //        workManager.getWorkInfoByIdLiveData(workRequest.id)
 //            .observe(context) { workInfo ->
 //                if (workInfo != null) {

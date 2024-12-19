@@ -34,12 +34,11 @@ import androidx.core.content.ContextCompat
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.opappdevs.happyhitter.const.WATCHER_WORKER_FLEX_MINUTES
-import com.opappdevs.happyhitter.const.WATCHER_WORKER_PERIOD_MINUTES
+import com.opappdevs.happyhitter.const.WATCHER_WORKER_REPEAT_MINUTES
 import com.opappdevs.happyhitter.ui.theme.HappyHitterTheme
 import com.opappdevs.happyhitter.util.NotificationListenerWatcherService
 import com.opappdevs.happyhitter.util.NotificationListenerService
@@ -145,59 +144,68 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    // TODO: notification listener Service must get enabled Setting on start command or onbind from db or shared preferences
-
-    // TODO: wie foreground und/oder Background Service sofort wieder starten, wenn er beendet wurde?
-    // TODO: Background: requestRebind() in der onDestroy or onDisconnected?
-    // TODO: Foreground: ?
-
-    // TODO: sicherstellen dass wenn der FG service aus ist, auch der BG aus ist (bspw. über onDestroy)
-
-    // we need a ServiceManager with its only public method startListening()
-    // this will start FG, which will start BG(s)
-    // and those BGs will, via prefs or db determine what to watch/listen to
-
-    // TODO: restart Listener from Foreground Service
-    // TODO: regelmäßig alle 60 min FG notification prüfen oder sogar neu setzen
-
-    // TODO: KI integrieren
-    // TODO: Smartwatch integrieren
-    // TODO: Song-Titel und Interpreten über Web-DB vervollständigen
-    // TODO: alle erkannten Titel in History ablegen (Happy Hits besonders kennzeichnen)
-    // TODO: Cover art herunterladen und als Hintergrund von Notifications anzeigen
-    // TODO: Mit KMP für iOS entwickeln
-
-    // TODO: Navigation, Drawer, DI, DB, Settings, Icons, Color Themes (test day/night mode), SplashScreen
-    // TODO: PlayStore and Apple Store, Impressum, Datenschutzerklärung
-
-    // TODO: manage key phrases with db
-
-    // TODO: Toasting durch Snackbar ersetzen und in Util auslagern
-    // TODO: or use centered Toast: https://stackoverflow.com/questions/3522023/center-text-in-a-toast
-
-    // TODO: implement more sources such as Shazam, YT Music, Apple, popular Players and direct streams
-
-    // TODO: allow listener service start only after key phrases have been set
-    // TODO: Toast after successful initial launch (return from listener settings)
-    // TODO: then show service status in ui?
-    // TODO: implement recovery measures from Medium
-
-    // TODO: turn off watcher and listener via button in notification
-
-    // Todo: regularly check on Listener service from ForegroundService and restart if necessary ..
-    // TODO: restart ForegroundService after re-boot via WorkManager (repeating Worker) +
-    // TODO: regularly check on ForegroundService via WorkManager +
-
-    // Todo: make sound file customizable, also volume
+    // NOTIFICATIONS
+    // TODO: regularly increment the priority of FG notification to avoid disappearing (MIUI/HyperOS)
+    // TODO: regularly (60 min) update FG notification if disappeared
+    // TODO: extract notification logic to separate service (DI)
     // TODO: display all recognized titles in notification
-    // TODO: keep a history of detected/all tracks (toggle via setting)
+    // TODO: improve notifications for Wear OS: https://developer.android.com/develop/ui/views/notifications#wear
+    // TODO: turn off watcher and listener via button in persistent notification
+
+    // SERVICE CONTROL
+    // TODO: allow listener service start only after key phrases have been set
+    // TODO: Toast after successful initial NL launch (on return from settings)
+    // TODO: check for battery optimization and inform the user (Not now, Take me there, Never show again -> prefs)
+    // TODO: NL must get enabled setting from prefs or db (onStartCommand or onBind)
+    // TODO: make sure NL is off when FG is off
+    // TODO: regularly check and restart NL from FG or even self
+    //  apply Medium stability measure
+    // TODO: restart FG/NL immediately if stopped/destroyed (requestRebind, startForeground)
+    //  via onDestroy or onDisconnected?
+    // TODO: use a ServiceManager with its only public method startListening()
+    //  this will start FG, which will start BG(s)
+    //  and those BGs will, via prefs or db determine what to watch/listen to
+
+    // DATA MANAGEMENT
+    // TODO: set up db
+    // TODO: store key/detected titles in a history (toggle via settings)
+    //  highlight detected key phrase titles
+    //  configure history length (days/weeks) via settings
+    // TODO: settings store via prefs
+
+    // UI
+    // TODO: show permissions and services status in nav drawer or dedicated composable
+    // TODO: input for key phrases
+    // TODO: icon art and splash screen
+    // TODO: color theme and dark mode
+    // TODO: overflow menus?
+    // TODO: settings composable
+    // TODO: scaffold
+    // TODO: complement Toasts with SnackBars and put into a SnackUtils class
+    // TODO: use centered Toast: https://stackoverflow.com/questions/3522023/center-text-in-a-toast
+    // Todo: make alarm sound file and volume customizable
+
+    // NAVIGATION
+    // TODO: compose navigation, nav drawer
+
+    // ARCHITECTURE
+    // TODO: dependency injection
+
+    // FUTURE
+    // TODO: integrate AI
     // TODO: make use of smartwatches (current title, disable listening, volume control)
+    // TODO: develop for iOS (KMP)
+    // TODO: complete title/artist via web db
+    // TODO: download over art and use as background for detection notification for every title
+    //  highlight detected key phrase title notifications
+    // TODO: Google Play and App Store, Impressum, Datenschutzerklärung
+    // TODO: implement more sources such as Shazam, YT Music, Apple Music, iTunes, Spotify, popular players and direct streams (exploit metadata)
+
 
     private fun startWatcherService() {
         checkAndRequestNotificationPermission()
     }
 
-    // TODO: extract this into a ServiceManger class
     private fun startWatcherServiceImplementation() {
         if (!NotificationListenerWatcherService.isRunning) {
             val startIntent = Intent(this, NotificationListenerWatcherService::class.java)
@@ -220,13 +228,10 @@ class MainActivity : ComponentActivity() {
         Log.d(tag, "Work not already enqueued, continuing scheduling")
 
         // Create the worker request
-        val workRequest = PeriodicWorkRequest.Builder(
-            NotificationListenerWatcherServiceWorker::class.java,
-            WATCHER_WORKER_PERIOD_MINUTES, TimeUnit.MINUTES,
+        val workRequest = PeriodicWorkRequestBuilder<NotificationListenerWatcherServiceWorker>(
+            WATCHER_WORKER_REPEAT_MINUTES, TimeUnit.MINUTES,
             WATCHER_WORKER_FLEX_MINUTES, TimeUnit.MINUTES  // min 300000 ms = 5 minutes
         )
-//            .setInitialDelay(0, TimeUnit.MINUTES) // seems to add to the repeat inverval, not replace it
-//            .setNextScheduleTimeOverride(System.currentTimeMillis()) // do it now
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
@@ -323,6 +328,7 @@ class MainActivity : ComponentActivity() {
         return false
     }
 
+    // TODO: we need this?
 //    @Suppress("DEPRECATION")
 //    private fun isNLServiceRunning(context: Context): Boolean {
 //        val manager = context.getSystemService(Service.ACTIVITY_SERVICE) as ActivityManager

@@ -6,7 +6,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -20,24 +22,36 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class NotificationListenerWatcherService: Service() {
+class NotificationListenerWatcherService : Service() {
 
     private val tag = javaClass.simpleName
 
     enum class ListenerStatus(val statusText: String, val iconResId: Int) {
-        STOPPED ("Notification Listener Service nicht gestartet",
-            R.drawable.ic_listener_stopped),
-        STARTED ("Notification Listener Service inaktiv",
-            R.drawable.ic_listener_inactive),
-        ACTIVE ("Notification Listener Service aktiv",
-            R.drawable.ic_listener_active),
+        STOPPED(
+            "Notification Listener Service nicht gestartet",
+            R.drawable.ic_listener_stopped
+        ),
+        STARTED(
+            "Notification Listener Service inaktiv",
+            R.drawable.ic_listener_inactive
+        ),
+        ACTIVE(
+            "Notification Listener Service aktiv",
+            R.drawable.ic_listener_active
+        ),
     }
 
     private var listenerStatus = ListenerStatus.STOPPED
 
+    //    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private val FOREGROUND_USAGE
+        get() = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            FOREGROUND_SERVICE_TYPE_LOCATION
+        } else {
+            FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+        }
     private val CHANNEL_ID = "ListenerCheckerNotification"
     private val NOTIFICATION_ID = 1
-    private val FOREGROUND_USAGE = FOREGROUND_SERVICE_TYPE_SPECIAL_USE
 
     private var _watcherJob: Job? = null
 
@@ -59,14 +73,30 @@ class NotificationListenerWatcherService: Service() {
             Log.d(tag, "Started with startId $startId")
 
             val notification = createNotification(getListenerServiceStatus())
-            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, FOREGROUND_USAGE)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+//                ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, FOREGROUND_USAGE)
+                ServiceCompat.startForeground(NOTIFICATION_ID, notification)
+            } else {
+                ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, FOREGROUND_USAGE)
+            }
             startWatchingNotificationListener()
             isRunning = true
         }
+        // Constant to return from onStartCommand: if this service's process is killed while it is
+        // // started (after returning from onStartCommand), then leave it in the started state
+        // // but don't retain this delivered intent. Later the system will try to re-create the
+        // service. Because it is in the started state, it will guarantee to call onStartCommand
+        // after creating the new service instance; if there are not any pending start commands to
+        // be delivered to the service, it will be called with a null intent object, so you must
+        // take care to check for this.
+
+        // This mode makes sense for things that will be explicitly started and stopped to run for
+        // arbitrary periods of time, such as a service performing background music playback.
         return START_STICKY
     }
 
-    // appears never to be called
+    // TODO: appears never to be called
 //    override fun stopService(name: Intent?): Boolean {
 //        Log.d(tag, "stopService called")
 //
@@ -87,12 +117,10 @@ class NotificationListenerWatcherService: Service() {
         return null //binding not allowed
     }
 
-    // TODO: regularly check for notification present and restore if necessary
-    // TODO: extract notification logic to separate service (DI)
     private fun createNotificationChannel() {
         val name = "Notification Listener Überwachung"
         val descriptionText = "Zeigt an, ob der Notification Listener Service aktiv ist"
-        val importance = NotificationManager.IMPORTANCE_LOW
+        val importance = NotificationManager.IMPORTANCE_HIGH
         val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
             description = descriptionText
         }
@@ -126,7 +154,7 @@ class NotificationListenerWatcherService: Service() {
                     continue
                 }
                 listenerStatus = currentStatus
-                presentNotification(currentStatus)
+                presentNotification(currentStatus) // TODO: update existing
             }
         }
     }
@@ -139,7 +167,7 @@ class NotificationListenerWatcherService: Service() {
         return when (NotificationListenerService.isServiceRunning) {
             false -> ListenerStatus.STOPPED
             true -> when (NotificationListenerService.isListenerEnabled) {
-                false ->ListenerStatus.STARTED
+                false -> ListenerStatus.STARTED
                 true -> ListenerStatus.ACTIVE
             }
         }
