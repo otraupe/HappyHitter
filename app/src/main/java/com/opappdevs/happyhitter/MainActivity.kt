@@ -183,7 +183,10 @@ class MainActivity : ComponentActivity() {
     // TODO: scaffold
     // TODO: complement Toasts with SnackBars and put into a SnackUtils class
     // TODO: use centered Toast: https://stackoverflow.com/questions/3522023/center-text-in-a-toast
-    // Todo: make alarm sound file and volume customizable
+
+    // SETTINGS
+    // TODO: make alarm sound file and volume customizable, make sure original volume restores
+    // TODO: prevent repeated alarms or customize period
 
     // NAVIGATION
     // TODO: compose navigation, nav drawer
@@ -198,8 +201,11 @@ class MainActivity : ComponentActivity() {
     // TODO: complete title/artist via web db
     // TODO: download over art and use as background for detection notification for every title
     //  highlight detected key phrase title notifications
-    // TODO: Google Play and App Store, Impressum, Datenschutzerklärung
+    // TODO: Google Play and App Store, Impressum mit Copyright und Lizenz, Datenschutzerklärung
+    // TODO: display OSS libs and licenses in the app
+    // TODO: implement support form with log sending
     // TODO: implement more sources such as Shazam, YT Music, Apple Music, iTunes, Spotify, popular players and direct streams (exploit metadata)
+    // TODO: more actions on title: enqueue, show additional info (album, year etc.)
 
 
     private fun startWatcherService() {
